@@ -192,7 +192,7 @@ export function DraftHeroHeadline({
                   </TooltipPopup>
                 </Tooltip>
                 {environmentLabel === null ? null : (
-                  <span className="ml-auto shrink-0 pl-3 text-muted-foreground text-xs">
+                  <span className="ml-auto min-w-0 max-w-[45%] truncate pl-3 text-muted-foreground text-xs">
                     {environmentLabel}
                   </span>
                 )}
