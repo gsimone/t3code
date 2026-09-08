@@ -94,6 +94,12 @@ export function DraftHeroHeadline({
     () => new Map(projectPickerEntries.map((entry) => [entry.group.projectKey, entry] as const)),
     [projectPickerEntries],
   );
+  // The same project name can exist in several environments, so only surface the
+  // environment label when it actually disambiguates the list.
+  const shouldShowEnvironmentLabels = useMemo(
+    () => new Set(projectPickerEntries.map((entry) => entry.targetProject.environmentId)).size >= 2,
+    [projectPickerEntries],
+  );
   const activeProjectGroup =
     activeProjectRef === null
       ? null
@@ -163,7 +169,10 @@ export function DraftHeroHeadline({
             }
           }}
         >
-          {projectPickerEntries.map(({ group }) => {
+          {projectPickerEntries.map(({ group, targetProject }) => {
+            const environmentLabel = shouldShowEnvironmentLabels
+              ? targetProject.environmentLabel
+              : null;
             return (
               <MenuRadioItem
                 key={group.projectKey}
@@ -177,9 +186,16 @@ export function DraftHeroHeadline({
                     {group.displayName}
                   </TooltipTrigger>
                   <TooltipPopup side="top" className="max-w-80">
-                    {group.displayName}
+                    {environmentLabel === null
+                      ? group.displayName
+                      : `${group.displayName} (${environmentLabel})`}
                   </TooltipPopup>
                 </Tooltip>
+                {environmentLabel === null ? null : (
+                  <span className="ml-auto shrink-0 pl-3 text-muted-foreground text-xs">
+                    {environmentLabel}
+                  </span>
+                )}
               </MenuRadioItem>
             );
           })}
