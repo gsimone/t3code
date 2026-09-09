@@ -1,6 +1,7 @@
 import type { DraftId } from "~/composerDraftStore";
 import { useComposerDraftStore } from "~/composerDraftStore";
 import type { ScopedProjectRef } from "@t3tools/contracts";
+import { resolveEnvironmentMachineKind } from "@t3tools/contracts";
 import { scopedProjectKey, scopeProjectRef } from "@t3tools/client-runtime/environment";
 import { FolderPlusIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
@@ -15,6 +16,7 @@ import {
 } from "~/sidebarProjectGrouping";
 import { useProjects, useThreadShells } from "~/state/entities";
 import { useEnvironments, usePrimaryEnvironmentId } from "~/state/environments";
+import { EnvironmentMachineIcon } from "../EnvironmentMachineIcon";
 import { ProjectFavicon } from "../ProjectFavicon";
 import { sortLogicalProjectsForSidebar } from "../Sidebar.logic";
 import {
@@ -57,6 +59,19 @@ export function DraftHeroHeadline({
     () =>
       new Map(
         environments.map((environment) => [environment.environmentId, environment.label] as const),
+      ),
+    [environments],
+  );
+  const environmentMachineById = useMemo(
+    () =>
+      new Map(
+        environments.map(
+          (environment) =>
+            [
+              environment.environmentId,
+              resolveEnvironmentMachineKind(environment.serverConfig),
+            ] as const,
+        ),
       ),
     [environments],
   );
@@ -192,8 +207,13 @@ export function DraftHeroHeadline({
                   </TooltipPopup>
                 </Tooltip>
                 {environmentLabel === null ? null : (
-                  <span className="ml-auto min-w-0 max-w-32 truncate pl-3 text-muted-foreground text-xs">
-                    {environmentLabel}
+                  <span className="ml-auto inline-flex min-w-0 max-w-32 items-center gap-1 pl-3 text-muted-foreground text-xs">
+                    <EnvironmentMachineIcon
+                      aria-hidden
+                      kind={environmentMachineById.get(targetProject.environmentId) ?? "server"}
+                      className="size-3 shrink-0"
+                    />
+                    <span className="min-w-0 truncate">{environmentLabel}</span>
                   </span>
                 )}
               </MenuRadioItem>
