@@ -29,6 +29,7 @@ import {
   MenuTrigger,
 } from "../ui/menu";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
+import { resolveProjectPickerEnvironmentHints } from "./DraftHeroHeadline.logic";
 
 interface DraftHeroHeadlineProps {
   readonly draftId: DraftId | null;
@@ -109,10 +110,8 @@ export function DraftHeroHeadline({
     () => new Map(projectPickerEntries.map((entry) => [entry.group.projectKey, entry] as const)),
     [projectPickerEntries],
   );
-  // The same project name can exist in several environments, so only surface the
-  // environment label when it actually disambiguates the list.
-  const shouldShowEnvironmentLabels = useMemo(
-    () => new Set(projectPickerEntries.map((entry) => entry.targetProject.environmentId)).size >= 2,
+  const environmentHintByKey = useMemo(
+    () => resolveProjectPickerEnvironmentHints(projectPickerEntries),
     [projectPickerEntries],
   );
   const activeProjectGroup =
@@ -185,9 +184,10 @@ export function DraftHeroHeadline({
           }}
         >
           {projectPickerEntries.map(({ group, targetProject }) => {
-            const environmentLabel = shouldShowEnvironmentLabels
-              ? targetProject.environmentLabel
-              : null;
+            const hint = environmentHintByKey.get(group.projectKey) ?? {
+              environmentLabel: null,
+              text: null,
+            };
             return (
               <MenuRadioItem
                 key={group.projectKey}
@@ -201,19 +201,19 @@ export function DraftHeroHeadline({
                     {group.displayName}
                   </TooltipTrigger>
                   <TooltipPopup side="top" className="max-w-80">
-                    {environmentLabel === null
-                      ? group.displayName
-                      : `${group.displayName} (${environmentLabel})`}
+                    {hint.text === null ? group.displayName : `${group.displayName} (${hint.text})`}
                   </TooltipPopup>
                 </Tooltip>
-                {environmentLabel === null ? null : (
+                {hint.text === null ? null : (
                   <span className="ml-auto inline-flex min-w-0 max-w-32 items-center gap-1 pl-3 text-muted-foreground text-xs">
-                    <EnvironmentMachineIcon
-                      aria-hidden
-                      kind={environmentMachineById.get(targetProject.environmentId) ?? "server"}
-                      className="size-3 shrink-0"
-                    />
-                    <span className="min-w-0 truncate">{environmentLabel}</span>
+                    {hint.environmentLabel === null ? null : (
+                      <EnvironmentMachineIcon
+                        aria-hidden
+                        kind={environmentMachineById.get(targetProject.environmentId) ?? "server"}
+                        className="size-3 shrink-0"
+                      />
+                    )}
+                    <span className="min-w-0 truncate">{hint.text}</span>
                   </span>
                 )}
               </MenuRadioItem>
